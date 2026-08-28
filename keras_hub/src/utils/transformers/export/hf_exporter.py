@@ -6,6 +6,7 @@ import warnings
 import keras
 
 # --- Gemma Utils ---
+from keras_hub.src.utils.tensor_utils import convert_to_numpy
 from keras_hub.src.utils.transformers.export.gemma import get_gemma_config
 from keras_hub.src.utils.transformers.export.gemma import (
     get_gemma_tokenizer_config,
@@ -233,6 +234,21 @@ def export_backbone(backbone, path, include_lm_head=False, tokenizer=None):
         from safetensors.flax import save_file
 
         save_file(weights_dict, weights_path, metadata={"format": "pt"})
+    elif backend == "openvino":
+        from safetensors.numpy import save_file
+
+        # OpenVINO variables are numpy backed, so save them through the numpy
+        # writer rather than a framework specific one.
+        save_file(
+            {
+                key: convert_to_numpy(
+                    value.value if hasattr(value, "value") else value
+                )
+                for key, value in weights_dict.items()
+            },
+            weights_path,
+            metadata={"format": "pt"},
+        )
     else:
         raise ValueError(f"Unsupported backend: {backend}")
 
