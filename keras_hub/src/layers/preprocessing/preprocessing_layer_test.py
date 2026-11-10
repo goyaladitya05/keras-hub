@@ -36,10 +36,16 @@ class DeviceLayer(PreprocessingLayer):
     """A layer whose output is a backend tensor created inside `call`."""
 
     def call(self, inputs):
+        if keras.backend.backend() == "mlx":
+            import mlx.core as mx
+
+            # MLX arrays live in unified memory and carry no device, so
+            # record the device the ops run on instead.
+            self.mlx_device = mx.default_device()
         return ops.ones((2,)) * inputs
 
 
-def _device_type(x):
+def _device_type(x, layer):
     """The device type a backend tensor lives on: `"cpu"`, `"gpu"`, ..."""
     if keras.backend.backend() == "tensorflow":
         # "/job:localhost/replica:0/task:0/device:CPU:0"
@@ -48,6 +54,9 @@ def _device_type(x):
         return next(iter(x.devices())).platform
     if keras.backend.backend() == "torch":
         return x.device.type
+    if keras.backend.backend() == "mlx":
+        # e.g. "DeviceType.cpu"
+        return str(layer.mlx_device.type).rsplit(".", 1)[-1]
     raise NotImplementedError(keras.backend.backend())
 
 
@@ -172,4 +181,4 @@ class PreprocessingLayerTest(TestCase):
         # several threads can also mix up their inputs.
         layer = DeviceLayer()
         (output,) = list(grain.MapDataset.source([1.0]).map(layer))
-        self.assertEqual(_device_type(output), "cpu")
+        self.assertEqual(_device_type(output, layer), "cpu")
