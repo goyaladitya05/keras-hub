@@ -28,6 +28,8 @@ jobs:
     env:
       KERAS_BACKEND: mlx
       KERAS_MLX_SHA: e18b10ce2d093989e13d6f02ffe73d263c346764
+      # Full fp32 matmuls on Apple GPUs, to match the other backends.
+      MLX_ENABLE_TF32: "0"
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
