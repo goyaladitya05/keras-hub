@@ -286,8 +286,7 @@ class Gemma3nTextModel(keras.layers.Layer):
         if not reverse:
             return self.embed_tokens(inputs)
         else:
-            embedding_weights = self.embed_tokens.embedding.embeddings
-            logits = ops.matmul(inputs, ops.transpose(embedding_weights))
+            logits = self.embed_tokens(inputs, reverse=True)
             if self.final_logit_soft_cap is not None:
                 logits = logits / self.final_logit_soft_cap
                 logits = ops.tanh(logits)
