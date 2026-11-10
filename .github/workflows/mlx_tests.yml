@@ -1,0 +1,71 @@
+name: MLX Tests (probe)
+
+# Throwaway probe: how much of the KerasHub suite passes on the keras-mlx
+# backend, on Linux (MLX CPU build) and macOS (Apple silicon, Metal).
+# Uses GitHub-hosted runners so it works on a fork.
+
+on:
+  push:
+    branches: [mlx-ci-probe]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  mlx_tests:
+    name: MLX (${{ matrix.os }}, shard ${{ matrix.shard }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        shard: [1, 2, 3, 4, 5, 6]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 240
+    env:
+      KERAS_BACKEND: mlx
+      KERAS_MLX_SHA: e18b10ce2d093989e13d6f02ffe73d263c346764
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        persist-credentials: false
+    - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+      with:
+        python-version: '3.11'
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt --progress-bar off
+        # keras-mlx depends on `keras`, which would reinstall stable Keras
+        # over keras-nightly (both own the `keras` module). Install the
+        # plugin first, then swap in nightly, like the OpenVINO leg does.
+        pip install "git+https://github.com/keras-team/keras-mlx.git@${KERAS_MLX_SHA}" --progress-bar off
+        pip uninstall -y keras
+        pip install keras-nightly --no-cache-dir --progress-bar off
+        pip install --no-deps -e "." --progress-bar off
+    - name: Check backend and device
+      run: |
+        python -c "import keras, mlx.core as mx; assert keras.config.backend() == 'mlx'; print(keras.__version__, mx.__version__, mx.default_device())"
+    - name: Test with pytest
+      env:
+        SHARD: ${{ matrix.shard }}
+      run: |
+        pytest keras_hub/ -n auto --dist loadfile --durations=30 \
+          --splits 6 --group "$SHARD" -rfE \
+          --junitxml="junit-${{ matrix.os }}-${SHARD}.xml"
+    - name: Run integration tests
+      if: ${{ always() && matrix.shard == 1 }}
+      run: |
+        python pip_build.py --install
+        cd integration_tests && pytest . -k "not NoTensorflow" -rfE \
+          --junitxml="../junit-integration-${{ matrix.os }}.xml"
+    - name: Upload test reports
+      if: ${{ always() }}
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      with:
+        name: junit-${{ matrix.os }}-${{ matrix.shard }}
+        path: junit-*.xml
+        if-no-files-found: ignore
