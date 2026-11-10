@@ -5,8 +5,7 @@ name: MLX Tests (probe)
 # Uses GitHub-hosted runners so it works on a fork.
 
 on:
-  push:
-    branches: [mlx-ci-probe]
+  pull_request:
   workflow_dispatch:
 
 permissions:

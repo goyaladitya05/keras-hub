@@ -547,7 +547,11 @@ class TestCase(tf.test.TestCase, parameterized.TestCase):
                 supported_layers.append(ReversibleEmbedding)
             return supported_layers
 
-        for mode in ["int8", "float8"]:
+        modes = ["int8", "float8"]
+        # MLX has no float8 dtype.
+        if keras.config.backend() == "mlx":
+            modes = ["int8"]
+        for mode in modes:
             # Manually configure DTypePolicyMap to avoid intensive computation
             # in `Model.quantize`.
             policy_map = keras.dtype_policies.DTypePolicyMap("float32")
