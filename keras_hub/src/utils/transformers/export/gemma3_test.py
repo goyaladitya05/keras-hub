@@ -152,7 +152,9 @@ class TestGemma3Export(TestCase):
         # Unigram test vocab properly.
         # So we use the Keras preprocessor to get the valid
         # input IDs for testing the model export.
-        keras_inputs = preprocessor.generate_preprocess(prompt)["token_ids"]
+        keras_inputs = ops.convert_to_numpy(
+            preprocessor.generate_preprocess(prompt)["token_ids"]
+        )
         keras_inputs = keras_inputs[keras_inputs != 0]  # strip padding
         input_ids_slow = torch.tensor([ops.convert_to_numpy(keras_inputs)])
         output_ids_slow = hf_full_model.generate(
