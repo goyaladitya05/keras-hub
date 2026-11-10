@@ -107,12 +107,19 @@ class MoonshineAudioConverterTest(TestCase):
             .random((2, self.sampling_rate, 1))
             .astype("float32")
         )
+        # Normalizing reduces over the whole clip, so float32 results depend
+        # on the backend's summation order.
         self.assertAllClose(
-            converter._call_python(audio), converter._call_tf(audio)
+            converter._call_python(audio),
+            converter._call_tf(audio),
+            atol=1e-5,
+            rtol=1e-5,
         )
         self.assertAllClose(
             converter._call_python(audio, padding="max_length", max_length=100),
             converter._call_tf(audio, padding="max_length", max_length=100),
+            atol=1e-5,
+            rtol=1e-5,
         )
 
     def test_grain_outputs_numpy(self):
