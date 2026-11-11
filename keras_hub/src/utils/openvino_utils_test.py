@@ -3,10 +3,19 @@ import unittest.mock
 
 import keras
 import numpy as np
-import openvino as ov
-import openvino.opset14 as ov_opset
 import pytest
-from openvino import Core
+
+if keras.config.backend() != "openvino":
+    # Importing openvino next to tensorflow can crash on macOS, so do not
+    # import it at all unless these tests will run.
+    pytest.skip(
+        "OpenVINO tests only run with OpenVINO backend",
+        allow_module_level=True,
+    )
+
+import openvino as ov  # noqa: E402
+import openvino.opset14 as ov_opset  # noqa: E402
+from openvino import Core  # noqa: E402
 
 from keras_hub.src.tests.test_case import TestCase
 from keras_hub.src.utils.openvino_utils import compile_model

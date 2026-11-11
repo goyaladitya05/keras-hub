@@ -39,7 +39,13 @@ class Gemma3nTextScaledWordEmbedding(keras.layers.Layer):
         self.embedding.build(input_shape)
         super().build(input_shape)
 
-    def call(self, inputs):
+    def call(self, inputs, reverse=False):
+        if reverse:
+            # Project hidden states onto the (unscaled) embedding matrix to
+            # get logits. Reading the weights here, inside `call`, keeps the
+            # projection tied to the live variable in functional models.
+            kernel = ops.cast(self.embedding.embeddings, inputs.dtype)
+            return ops.matmul(inputs, ops.transpose(kernel))
         embeddings = self.embedding(inputs)
         scale = ops.cast(self.embed_scale, embeddings.dtype)
         return embeddings * scale

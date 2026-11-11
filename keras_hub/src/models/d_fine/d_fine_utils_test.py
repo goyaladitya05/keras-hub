@@ -55,11 +55,8 @@ class DFineUtilsTest(TestCase):
         )
         scipy_row_ind, scipy_col_ind = linear_sum_assignment(cost_matrix)
         scipy_cost = cost_matrix[scipy_row_ind, scipy_col_ind].sum()
-        valid_row_ind = keras.ops.convert_to_numpy(
-            keras_row_ind[keras_valid_mask]
-        )
-        valid_col_ind = keras.ops.convert_to_numpy(
-            keras_col_ind[keras_valid_mask]
-        )
+        valid_mask = keras.ops.convert_to_numpy(keras_valid_mask)
+        valid_row_ind = keras.ops.convert_to_numpy(keras_row_ind)[valid_mask]
+        valid_col_ind = keras.ops.convert_to_numpy(keras_col_ind)[valid_mask]
         keras_cost = cost_matrix[valid_row_ind, valid_col_ind].sum()
         self.assertAllClose(keras_cost, scipy_cost)

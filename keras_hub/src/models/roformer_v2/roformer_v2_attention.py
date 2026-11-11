@@ -70,9 +70,7 @@ class RoformrPositionalEmbedding(keras.layers.Layer):
         indices = [None] * ndim
         for i in axes:
             indices[i] = slice(None)
-        if keras.config.backend() == "jax":
-            return tensor[tuple(indices)]
-        return tensor[indices]
+        return tensor[tuple(indices)]
 
     def sinusoidal_embeddings(self, pos, dim, base=10000):
         if dim % 2 != 0:

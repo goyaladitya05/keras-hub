@@ -170,7 +170,7 @@ class BleuTest(TestCase):
             tokenizer=byte_tokenizer,
             max_order=8,
             smooth=True,
-            dtype=tf.float64,
+            dtype="float16",
             name="bleu_test",
         )
 

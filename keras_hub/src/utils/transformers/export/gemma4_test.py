@@ -481,7 +481,9 @@ class TestGemma4Export(TestCase):
 
         # Prepare a short token sequence.
         prompt = "the quick"
-        keras_inputs = preprocessor.generate_preprocess(prompt)["token_ids"]
+        keras_inputs = ops.convert_to_numpy(
+            preprocessor.generate_preprocess(prompt)["token_ids"]
+        )
         keras_inputs = keras_inputs[keras_inputs != 0]
         input_ids = torch.tensor(
             [ops.convert_to_numpy(keras_inputs)], dtype=torch.long
