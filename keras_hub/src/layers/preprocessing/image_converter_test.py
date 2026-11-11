@@ -78,7 +78,8 @@ class ImageConverterTest(TestCase):
             _allow_python_workflow=self._allow_python_workflow,
         )
         int_image = ops.ones((10, 10, 3), dtype="uint8") * 255
-        float_image = ops.ones((10, 10, 3), dtype="float64") * 255
+        # NumPy, since some backends cannot create float64 tensors on the GPU.
+        float_image = np.ones((10, 10, 3), dtype="float64") * 255
         self.assertDTypeEqual(converter(int_image), "float32")
         self.assertDTypeEqual(converter(float_image), "float32")
         self.assertAllClose(converter(int_image), np.ones((4, 4, 3)))
