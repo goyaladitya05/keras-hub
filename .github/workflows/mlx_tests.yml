@@ -24,7 +24,7 @@ jobs:
         os: [ubuntu-latest, macos-latest]
         shard: [1, 2, 3, 4, 5, 6]
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 240
+    timeout-minutes: 90
     env:
       KERAS_BACKEND: mlx
       KERAS_MLX_SHA: e18b10ce2d093989e13d6f02ffe73d263c346764
@@ -54,7 +54,9 @@ jobs:
       env:
         SHARD: ${{ matrix.shard }}
       run: |
-        pytest keras_hub/ -n auto --dist loadfile --durations=30 \
+        # `--dist loadfile` hangs once a worker crashes (pytest-xdist 3.8), so
+        # a single native crash would stall the shard until the timeout.
+        pytest keras_hub/ -n auto --dist load --durations=30 \
           --splits 6 --group "$SHARD" -rfE \
           --junitxml="junit-${{ matrix.os }}-${SHARD}.xml"
     - name: Run integration tests
